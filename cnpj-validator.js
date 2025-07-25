@@ -1,192 +1,178 @@
 /**
- * Validação de CNPJ Alfanumérico
- * Biblioteca JavaScript especializada em CNPJ alfanumérico, com suporte completo para CNPJ numérico e CPF
+ * CNPJ Alfanumérico Validator Library
+ * Versão única em JavaScript para inclusão via <script>
  * @version 1.0.0
  * @author https://github.com/viniciusvams
  * @license MIT
  */
 
-(function (global, factory) {
-  if (typeof exports === 'object' && typeof module !== 'undefined') {
-    // Para uso com Node.js (CommonJS)
-    module.exports = factory();
-  } else if (typeof define === 'function' && define.amd) {
-    // Para uso com AMD (RequireJS)
-    define(factory);
-  } else {
-    // Para uso direto no navegador
-    global.CNPJValidator = factory();
-  }
-}(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this, function () {
-  'use strict';
+(function(global) {
+    'use strict';
 
-  /**
-   * 🛠️ UTILITÁRIOS GERAIS
-   * Funções auxiliares que ajudam na manipulação de strings e números
-   */
-  const UtilitariosGerais = {
-    
-    /**
-     * Limpa uma string deixando apenas números
-     * Exemplo: "123.456.789-01" vira "12345678901"
-     */
-    apenasNumeros: function(texto) {
-      if (!texto) return '';
-      return texto.replace(/\D/g, '');
-    },
+    const Utils = {
+        onlyNumbers: (str) => str.replace(/\D/g, ''),
+        clean: (str, pattern) => str.replace(pattern, ''),
+        allSameDigits: (str) => /^(\d)\1+$/.test(str),
+        randomInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
+    };
 
-    /**
-     * Remove caracteres especiais usando um padrão personalizado
-     * Útil para limpeza mais específica de documentos
-     */
-    limparComPadrao: function(texto, padrao) {
-      if (!texto) return '';
-      return texto.replace(padrao, '');
-    },
+    const CPF = {
+        validate(cpf) {
+            if (!cpf) return false;
+            const cleanCPF = Utils.onlyNumbers(cpf);
+            if (cleanCPF.length !== 11 || Utils.allSameDigits(cleanCPF)) return false;
+            let soma = 0;
+            for (let i = 0; i < 9; i++) soma += parseInt(cleanCPF.charAt(i)) * (10 - i);
+            let dv1 = (soma * 10) % 11;
+            if (dv1 === 10) dv1 = 0;
+            if (dv1 !== parseInt(cleanCPF.charAt(9))) return false;
+            soma = 0;
+            for (let i = 0; i < 10; i++) soma += parseInt(cleanCPF.charAt(i)) * (11 - i);
+            let dv2 = (soma * 10) % 11;
+            if (dv2 === 10) dv2 = 0;
+            return dv2 === parseInt(cleanCPF.charAt(10));
+        },
 
-    /**
-     * Verifica se todos os dígitos de uma string são iguais
-     * Exemplo: "111111111" retorna true, "123456789" retorna false
-     */
-    todosDigitosIguais: function(texto) {
-      if (!texto) return false;
-      return /^(\d)\1+$/.test(texto);
-    },
+        generate(options = { formatted: true }) {
+            const numbers = [];
+            for (let i = 0; i < 9; i++) numbers.push(Utils.randomInt(0, 9));
+            let soma = numbers.reduce((acc, num, i) => acc + num * (10 - i), 0);
+            let dv1 = (soma * 10) % 11;
+            if (dv1 === 10) dv1 = 0;
+            numbers.push(dv1);
+            soma = numbers.reduce((acc, num, i) => acc + num * (11 - i), 0);
+            let dv2 = (soma * 10) % 11;
+            if (dv2 === 10) dv2 = 0;
+            numbers.push(dv2);
+            const cpf = numbers.join('');
+            return options.formatted ? this.format(cpf) : cpf;
+        },
 
-    /**
-     * Gera um número aleatório entre o mínimo e máximo (inclusivo)
-     * Usado para gerar dígitos aleatórios nos documentos
-     */
-    numeroAleatorio: function(minimo, maximo) {
-      return Math.floor(Math.random() * (maximo - minimo + 1)) + minimo;
-    },
+        format(cpf) {
+            const cleanCPF = Utils.onlyNumbers(cpf);
+            return cleanCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        },
 
-    /**
-     * Converte texto para maiúsculas de forma segura
-     * Protege contra valores null ou undefined
-     */
-    converterParaMaiuscula: function(texto) {
-      if (!texto) return '';
-      return texto.toString().toUpperCase();
-    }
-  };
+        clean(cpf) {
+            return Utils.onlyNumbers(cpf);
+        }
+    };
 
-  /**
-   * 📄 VALIDADOR E GERADOR DE CPF
-   * Funções específicas para trabalhar com Cadastro de Pessoa Física
-   */
-  const CPF = {
-    
-    /**
-     * Valida se um CPF é válido ou não
-     * @param {string} cpf - O CPF a ser validado (pode ter formatação ou não)
-     * @returns {boolean} - true se válido, false se inválido
-     */
-    validate: function(cpf) {
-      // Se não foi fornecido um CPF, consideramos inválido
-      if (!cpf) {
-        return false;
-      }
-      
-      // Remove toda a formatação, deixando apenas números
-      const cpfLimpo = UtilitariosGerais.apenasNumeros(cpf);
-      
-      // Um CPF válido deve ter exatamente 11 dígitos
-      if (cpfLimpo.length !== 11) {
-        return false;
-      }
-      
-      // CPFs com todos os dígitos iguais são inválidos (ex: 111.111.111-11)
-      if (UtilitariosGerais.todosDigitosIguais(cpfLimpo)) {
-        return false;
-      }
+    const CNPJ = {
+        validate(cnpj) {
+            if (!cnpj) return false;
+            const cleanCNPJ = Utils.onlyNumbers(cnpj);
+            if (cleanCNPJ.length !== 14 || Utils.allSameDigits(cleanCNPJ)) return false;
+            let tamanho = 12;
+            let numeros = cleanCNPJ.substring(0, tamanho);
+            let digitos = cleanCNPJ.substring(tamanho);
+            let soma = 0;
+            let pos = tamanho - 7;
+            for (let i = tamanho; i >= 1; i--) {
+                soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            let dv1 = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            if (dv1 !== parseInt(digitos.charAt(0))) return false;
+            tamanho++;
+            numeros = cleanCNPJ.substring(0, tamanho);
+            soma = 0;
+            pos = tamanho - 7;
+            for (let i = tamanho; i >= 1; i--) {
+                soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+                if (pos < 2) pos = 9;
+            }
+            let dv2 = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            return dv2 === parseInt(digitos.charAt(1));
+        },
 
-      // CÁLCULO DO PRIMEIRO DÍGITO VERIFICADOR
-      // Multiplica cada um dos 9 primeiros dígitos por pesos decrescentes (10, 9, 8, ..., 2)
-      let somaParaPrimeiroDV = 0;
-      for (let posicao = 0; posicao < 9; posicao++) {
-        const digito = parseInt(cpfLimpo.charAt(posicao));
-        const peso = 10 - posicao; // Pesos: 10, 9, 8, 7, 6, 5, 4, 3, 2
-        somaParaPrimeiroDV += digito * peso;
-      }
-      
-      // Calcula o primeiro dígito verificador
-      let primeiroDV = (somaParaPrimeiroDV * 10) % 11;
-      if (primeiroDV === 10) {
-        primeiroDV = 0; // Se der 10, vira 0
-      }
-      
-      // Compara com o 10º dígito do CPF
-      if (primeiroDV !== parseInt(cpfLimpo.charAt(9))) {
-        return false;
-      }
+        generate(options = { formatted: true }) {
+            const numbers = [];
+            for (let i = 0; i < 12; i++) numbers.push(Utils.randomInt(0, 9));
+            let soma = 0;
+            let pos = 5;
+            for (let i = 0; i < 12; i++) {
+                soma += numbers[i] * pos--;
+                if (pos < 2) pos = 9;
+            }
+            let dv1 = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            numbers.push(dv1);
+            soma = 0;
+            pos = 6;
+            for (let i = 0; i < 13; i++) {
+                soma += numbers[i] * pos--;
+                if (pos < 2) pos = 9;
+            }
+            let dv2 = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            numbers.push(dv2);
+            const cnpj = numbers.join('');
+            return options.formatted ? this.format(cnpj) : cnpj;
+        },
 
-      // CÁLCULO DO SEGUNDO DÍGITO VERIFICADOR
-      // Multiplica cada um dos 10 primeiros dígitos por pesos decrescentes (11, 10, 9, ..., 2)
-      let somaParaSegundoDV = 0;
-      for (let posicao = 0; posicao < 10; posicao++) {
-        const digito = parseInt(cpfLimpo.charAt(posicao));
-        const peso = 11 - posicao; // Pesos: 11, 10, 9, 8, 7, 6, 5, 4, 3, 2
-        somaParaSegundoDV += digito * peso;
-      }
-      
-      // Calcula o segundo dígito verificador
-      let segundoDV = (somaParaSegundoDV * 10) % 11;
-      if (segundoDV === 10) {
-        segundoDV = 0; // Se der 10, vira 0
-      }
+        format(cnpj) {
+            const cleanCNPJ = Utils.onlyNumbers(cnpj);
+            return cleanCNPJ.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+        },
 
-      // Compara com o 11º dígito do CPF
-      return segundoDV === parseInt(cpfLimpo.charAt(10));
-    },
+        clean(cnpj) {
+            return Utils.onlyNumbers(cnpj);
+        }
+    };
 
-    /**
-     * Gera um CPF válido aleatório
-     * @param {Object} opcoes - Configurações para geração
-     * @param {boolean} opcoes.formatted - Se deve retornar formatado (padrão: true)
-     * @returns {string} - CPF gerado
-     */
-    generate: function(opcoes = { formatted: true }) {
-      const numerosGerados = [];
-      
-      // Gera os primeiros 9 dígitos aleatoriamente
-      console.log('🎲 Gerando os 9 primeiros dígitos do CPF...');
-      for (let i = 0; i < 9; i++) {
-        const digitoAleatorio = UtilitariosGerais.numeroAleatorio(0, 9);
-        numerosGerados.push(digitoAleatorio);
-      }
+    const CNPJAlpha = {
+        _charToValue(char) {
+            return char.charCodeAt(0) - 48;
+        },
 
-      // Calcula o primeiro dígito verificador usando a mesma lógica da validação
-      console.log('🔢 Calculando primeiro dígito verificador...');
-      let somaParaPrimeiroDV = 0;
-      for (let i = 0; i < 9; i++) {
-        somaParaPrimeiroDV += numerosGerados[i] * (10 - i);
-      }
-      let primeiroDV = (somaParaPrimeiroDV * 10) % 11;
-      if (primeiroDV === 10) primeiroDV = 0;
-      numerosGerados.push(primeiroDV);
+        _calculateDigits(base) {
+            const valores = base.split('').map(this._charToValue);
+            const pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+            let soma1 = valores.reduce((acc, val, i) => acc + val * pesos1[i], 0);
+            let resto1 = soma1 % 11;
+            let dv1 = (resto1 === 0 || resto1 === 1) ? 0 : 11 - resto1;
+            valores.push(dv1);
+            const pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+            let soma2 = valores.reduce((acc, val, i) => acc + val * pesos2[i], 0);
+            let resto2 = soma2 % 11;
+            let dv2 = (resto2 === 0 || resto2 === 1) ? 0 : 11 - resto2;
+            return `${dv1}${dv2}`;
+        },
 
-      // Calcula o segundo dígito verificador
-      console.log('🔢 Calculando segundo dígito verificador...');
-      let somaParaSegundoDV = 0;
-      for (let i = 0; i < 10; i++) {
-        somaParaSegundoDV += numerosGerados[i] * (11 - i);
-      }
-      let segundoDV = (somaParaSegundoDV * 10) % 11;
-      if (segundoDV === 10) segundoDV = 0;
-      numerosGerados.push(segundoDV);
+        validate(cnpj) {
+            if (!cnpj) return false;
+            const cleanCNPJ = Utils.clean(cnpj, /[^\w]/g).toUpperCase();
+            if (!/^[A-Z0-9]{12}\d{2}$/.test(cleanCNPJ)) return false;
+            const base = cleanCNPJ.slice(0, 12);
+            const digits = cleanCNPJ.slice(12, 14);
+            const calculatedDigits = this._calculateDigits(base);
+            return digits === calculatedDigits;
+        },
 
-      // Junta todos os números
-      const cpfCompleto = numerosGerados.join('');
-      
-      // Retorna formatado ou não, conforme solicitado
-      return opcoes.formatted ? this.format(cpfCompleto) : cpfCompleto;
-    },
+        generate(options = { formatted: true }) {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const chars = [];
+            for (let i = 0; i < 12; i++) {
+                chars.push(Math.random() < 0.5
+                    ? letters.charAt(Utils.randomInt(0, 25))
+                    : Utils.randomInt(0, 9).toString()
+                );
+            }
+            const base = chars.join('');
+            const digits = this._calculateDigits(base);
+            const cnpj = base + digits;
+            return options.formatted ? this.format(cnpj) : cnpj;
+        },
 
-    /**
-     * Formata um CPF adicionando pontos e hífen
-     * @param {string} cpf - CPF sem formatação
-     * @returns {string} - CPF formatado (000.000.000-00)
-     */
-    format: function(cpf) {
-      const cpfLimpo = UtilitariosGerais.apen
+        format(cnpj) {
+            const cleanCNPJ = Utils.clean(cnpj, /[^\w]/g).toUpperCase();
+            return cleanCNPJ.replace(/^(.{2})(.{3})(.{3})(.{4})(.{2})$/, '$1.$2.$3/$4-$5');
+        },
+
+        clean(cnpj) {
+            return Utils.clean(cnpj, /[^\w]/g).toUpperCase();
+        }
+    };
+
+    global.CNPJValidator = { CPF, CNPJNumerico: CNPJ, CNPJAlfanumerico: CNPJAlpha, Utils };
+
+})(typeof window !== 'undefined' ? window : globalThis);
