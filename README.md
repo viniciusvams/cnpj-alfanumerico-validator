@@ -32,7 +32,7 @@ Uma biblioteca JavaScript **especializada em CNPJ alfanumérico**, com validaç�
 
 ### Download Direto
 ```html
-<script src="https://github.com/viniciusvams/cnpj-alfanumerico-validator/releases/latest/download/cnpj-validator.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/viniciusvams/cnpj-alfanumerico-validator@latest/cnpj-validator.js"></script>
 ```
 
 ## 🚀 Como usar
