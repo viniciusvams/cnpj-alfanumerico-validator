@@ -176,3 +176,4 @@
     global.CNPJValidator = { CPF, CNPJNumerico: CNPJ, CNPJAlfanumerico: CNPJAlpha, Utils };
 
 })(typeof window !== 'undefined' ? window : globalThis);
+ 
