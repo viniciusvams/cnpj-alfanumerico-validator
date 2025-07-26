@@ -24,7 +24,7 @@ Uma biblioteca JavaScript **especializada em CNPJ alfanumérico**, com validaç�
 - [Como usar](#-como-usar)
 - [API Completa](#-api-completa)
 - [Exemplos Práticos](#-exemplos-práticos)
-- [Demo Online](#-demo-online)
+- [Demo Online](https://viniciusvams.github.io/cnpj-alfanumerico-validator/)
 - [Testes](#-testes)
 - [Contribuindo](#-contribuindo)
 
